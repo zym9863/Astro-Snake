@@ -1,0 +1,419 @@
+---
+---
+
+<div class="game-container">
+  <div class="game-header">
+    <h1>贪吃蛇游戏</h1>
+    <div class="score-container">
+      <div class="score">
+        分数: <span id="current-score">0</span>
+      </div>
+      <div class="high-score">
+        最高分: <span id="high-score">0</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="game-area">
+    <canvas id="game-canvas" width="400" height="400"></canvas>
+    <div class="game-overlay" id="game-overlay">
+      <div class="game-message" id="game-message">
+        <h2>按空格键开始游戏</h2>
+        <p>使用方向键控制蛇的移动</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="game-controls">
+    <button id="start-btn" class="btn btn-primary">开始</button>
+    <button id="pause-btn" class="btn btn-secondary">暂停</button>
+    <button id="reset-btn" class="btn btn-secondary">重置</button>
+  </div>
+  
+  <div class="instructions">
+    <p>使用方向键 ↑↓←→ 控制蛇的移动，或按空格键开始/暂停游戏</p>
+  </div>
+</div>
+
+<style>
+  .game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: white;
+  }
+  
+  .game-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .game-header h1 {
+    margin: 0 0 20px 0;
+    font-size: 2.5em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  }
+  
+  .score-container {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+  
+  .game-area {
+    position: relative;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  
+  #game-canvas {
+    display: block;
+    background: #2c3e50;
+    border: 3px solid #34495e;
+  }
+  
+  .game-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+  }
+  
+  .game-overlay.hidden {
+    display: none;
+  }
+  
+  .game-message {
+    text-align: center;
+    color: white;
+  }
+  
+  .game-message h2 {
+    margin: 0 0 10px 0;
+    font-size: 1.8em;
+  }
+  
+  .game-message p {
+    margin: 0;
+    opacity: 0.8;
+  }
+  
+  .game-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+  
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+  
+  .btn-primary {
+    background: linear-gradient(45deg, #27ae60, #2ecc71);
+    color: white;
+  }
+  
+  .btn-secondary {
+    background: linear-gradient(45deg, #3498db, #2980b9);
+    color: white;
+  }
+  
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .instructions {
+    text-align: center;
+    opacity: 0.8;
+    font-size: 0.9em;
+  }
+  
+  .instructions p {
+    margin: 0;
+  }
+  
+  @media (max-width: 600px) {
+    .game-container {
+      padding: 10px;
+    }
+    
+    #game-canvas {
+      width: 300px;
+      height: 300px;
+    }
+    
+    .score-container {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .game-controls {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .btn {
+      width: 120px;
+    }
+  }
+</style>
+
+<script>
+  class SnakeGame {
+    constructor() {
+      this.canvas = document.getElementById('game-canvas');
+      this.ctx = this.canvas.getContext('2d');
+      this.overlay = document.getElementById('game-overlay');
+      this.message = document.getElementById('game-message');
+      this.currentScoreEl = document.getElementById('current-score');
+      this.highScoreEl = document.getElementById('high-score');
+      
+      this.startBtn = document.getElementById('start-btn');
+      this.pauseBtn = document.getElementById('pause-btn');
+      this.resetBtn = document.getElementById('reset-btn');
+      
+      this.gridSize = 20;
+      this.tileCount = this.canvas.width / this.gridSize;
+      
+      this.init();
+      this.setupEventListeners();
+      this.loadHighScore();
+    }
+    
+    init() {
+      this.snake = [
+        { x: 10, y: 10 }
+      ];
+      this.food = this.generateFood();
+      this.dx = 0;
+      this.dy = 0;
+      this.score = 0;
+      this.gameRunning = false;
+      this.gameOver = false;
+      
+      this.updateScore();
+      this.showOverlay('按空格键开始游戏', '使用方向键控制蛇的移动');
+    }
+    
+    setupEventListeners() {
+      document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+      
+      this.startBtn.addEventListener('click', () => this.startGame());
+      this.pauseBtn.addEventListener('click', () => this.togglePause());
+      this.resetBtn.addEventListener('click', () => this.resetGame());
+    }
+    
+    handleKeyPress(e) {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (this.gameOver) {
+          this.resetGame();
+        } else {
+          this.togglePause();
+        }
+        return;
+      }
+      
+      if (!this.gameRunning) return;
+      
+      const direction = {
+        'ArrowUp': { x: 0, y: -1 },
+        'ArrowDown': { x: 0, y: 1 },
+        'ArrowLeft': { x: -1, y: 0 },
+        'ArrowRight': { x: 1, y: 0 }
+      }[e.code];
+      
+      if (direction) {
+        e.preventDefault();
+        if (direction.x !== -this.dx && direction.y !== -this.dy) {
+          this.dx = direction.x;
+          this.dy = direction.y;
+        }
+      }
+    }
+    
+    startGame() {
+      if (this.gameOver) {
+        this.resetGame();
+        return;
+      }
+      
+      // 如果还没有设置方向，默认向右移动
+      if (this.dx === 0 && this.dy === 0) {
+        this.dx = 1;
+        this.dy = 0;
+      }
+      
+      this.gameRunning = true;
+      this.hideOverlay();
+      this.gameLoop();
+    }
+    
+    togglePause() {
+      if (this.gameOver) return;
+      
+      this.gameRunning = !this.gameRunning;
+      
+      if (this.gameRunning) {
+        this.hideOverlay();
+        this.gameLoop();
+      } else {
+        this.showOverlay('游戏暂停', '按空格键继续');
+      }
+    }
+    
+    resetGame() {
+      this.init();
+      this.draw();
+    }
+    
+    gameLoop() {
+      if (!this.gameRunning) return;
+      
+      this.update();
+      this.draw();
+      
+      if (this.gameRunning) {
+        setTimeout(() => this.gameLoop(), 150);
+      }
+    }
+    
+    update() {
+      // 如果蛇还没有开始移动，不要更新
+      if (this.dx === 0 && this.dy === 0) {
+        return;
+      }
+      
+      const head = { x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy };
+      
+      if (this.checkCollision(head)) {
+        this.endGame();
+        return;
+      }
+      
+      this.snake.unshift(head);
+      
+      if (head.x === this.food.x && head.y === this.food.y) {
+        this.score += 10;
+        this.updateScore();
+        this.food = this.generateFood();
+      } else {
+        this.snake.pop();
+      }
+    }
+    
+    checkCollision(head) {
+      return (
+        head.x < 0 || head.x >= this.tileCount ||
+        head.y < 0 || head.y >= this.tileCount ||
+        this.snake.some(segment => segment.x === head.x && segment.y === head.y)
+      );
+    }
+    
+    generateFood() {
+      let food;
+      do {
+        food = {
+          x: Math.floor(Math.random() * this.tileCount),
+          y: Math.floor(Math.random() * this.tileCount)
+        };
+      } while (this.snake.some(segment => segment.x === food.x && segment.y === food.y));
+      
+      return food;
+    }
+    
+    draw() {
+      this.ctx.fillStyle = '#2c3e50';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+      
+      this.ctx.fillStyle = '#27ae60';
+      this.snake.forEach((segment, index) => {
+        if (index === 0) {
+          this.ctx.fillStyle = '#2ecc71';
+        } else {
+          this.ctx.fillStyle = '#27ae60';
+        }
+        
+        this.ctx.fillRect(
+          segment.x * this.gridSize + 1,
+          segment.y * this.gridSize + 1,
+          this.gridSize - 2,
+          this.gridSize - 2
+        );
+      });
+      
+      this.ctx.fillStyle = '#e74c3c';
+      this.ctx.fillRect(
+        this.food.x * this.gridSize + 1,
+        this.food.y * this.gridSize + 1,
+        this.gridSize - 2,
+        this.gridSize - 2
+      );
+    }
+    
+    endGame() {
+      this.gameRunning = false;
+      this.gameOver = true;
+      this.saveHighScore();
+      this.showOverlay('游戏结束!', `得分: ${this.score} 分<br>按空格键重新开始`);
+    }
+    
+    updateScore() {
+      this.currentScoreEl.textContent = this.score;
+    }
+    
+    loadHighScore() {
+      const highScore = localStorage.getItem('snake-high-score') || 0;
+      this.highScoreEl.textContent = highScore;
+    }
+    
+    saveHighScore() {
+      const currentHigh = parseInt(localStorage.getItem('snake-high-score') || 0);
+      if (this.score > currentHigh) {
+        localStorage.setItem('snake-high-score', this.score.toString());
+        this.highScoreEl.textContent = this.score;
+      }
+    }
+    
+    showOverlay(title, description) {
+      this.message.innerHTML = `<h2>${title}</h2><p>${description}</p>`;
+      this.overlay.classList.remove('hidden');
+    }
+    
+    hideOverlay() {
+      this.overlay.classList.add('hidden');
+    }
+  }
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    new SnakeGame();
+  });
+</script>
