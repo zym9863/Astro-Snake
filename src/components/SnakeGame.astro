@@ -312,6 +312,10 @@
 
 <script>
   class SnakeGame {
+    /**
+     * 构造函数：初始化画布、DOM引用、基础状态并加载最高分。
+     * 说明：调用 init() 完成游戏状态初始化，再绑定事件并读取本地存储最高分。
+     */
     constructor() {
       this.canvas = document.getElementById('game-canvas');
       this.ctx = this.canvas.getContext('2d');
@@ -338,6 +342,10 @@
       this.loadHighScore();
     }
     
+    /**
+     * 初始化/重置核心游戏状态（蛇、食物、方向、分数、状态标志）。
+     * 不启动循环，仅负责数据准备与 UI 初始提示。
+     */
     init() {
       this.snake = [
         { x: 10, y: 10 }
@@ -353,6 +361,9 @@
       this.showOverlay('按空格键开始游戏', '使用方向键控制蛇的移动');
     }
     
+    /**
+     * 绑定键盘与按钮事件，所有监听器只注册一次。
+     */
     setupEventListeners() {
       document.addEventListener('keydown', (e) => this.handleKeyPress(e));
       
@@ -361,6 +372,10 @@
       this.resetBtn.addEventListener('click', () => this.resetGame());
     }
     
+    /**
+     * 处理键盘按键：空格（开始/暂停/重开）与方向键（改变蛇方向）。
+     * @param {KeyboardEvent} e 键盘事件
+     */
     handleKeyPress(e) {
       if (e.code === 'Space') {
         e.preventDefault();
@@ -390,6 +405,9 @@
       }
     }
     
+    /**
+     * 开始游戏：若为首次启动则设置默认移动方向并进入主循环。
+     */
     startGame() {
       if (this.gameOver) {
         this.resetGame();
@@ -407,6 +425,9 @@
       this.gameLoop();
     }
     
+    /**
+     * 切换暂停状态：暂停时显示遮罩提示，继续时恢复循环。
+     */
     togglePause() {
       if (this.gameOver) return;
       
@@ -420,11 +441,18 @@
       }
     }
     
+    /**
+     * 重置游戏到初始状态并立即重绘。
+     */
     resetGame() {
       this.init();
       this.draw();
     }
     
+    /**
+     * 主游戏循环：基于时间间隔控制逻辑更新，使用 requestAnimationFrame 驱动渲染。
+     * 说明：移动间隔内仅更新动画过渡值，使视觉更平滑。
+     */
     gameLoop() {
       if (!this.gameRunning) return;
       
@@ -447,6 +475,10 @@
       }
     }
     
+    /**
+     * 核心逻辑更新：推进蛇位置、检测碰撞、处理吃食物、生成特效。
+     * 若未开始移动（方向为0,0）则跳过。
+     */
     update() {
       // 如果蛇还没有开始移动，不要更新
       if (this.dx === 0 && this.dy === 0) {
@@ -473,6 +505,11 @@
       }
     }
     
+    /**
+     * 碰撞检测：判断是否撞墙或撞到自身。
+     * @param {{x:number,y:number}} head 预期新头部坐标
+     * @returns {boolean} 是否发生碰撞
+     */
     checkCollision(head) {
       return (
         head.x < 0 || head.x >= this.tileCount ||
@@ -481,6 +518,10 @@
       );
     }
     
+    /**
+     * 生成不与蛇身体重叠的新食物坐标。
+     * @returns {{x:number,y:number}} 食物格子坐标
+     */
     generateFood() {
       let food;
       do {
@@ -493,6 +534,9 @@
       return food;
     }
     
+    /**
+     * 更新屏幕上升分数字动画与粒子特效的生命周期与位置。
+     */
     updateAnimations() {
       this.scoreAnimations = this.scoreAnimations.filter(animation => {
         animation.life -= 0.02;
@@ -509,6 +553,11 @@
       });
     }
     
+    /**
+     * 创建吃食物后的分数飘字动画。
+     * @param {number} x 食物所在格 x
+     * @param {number} y 食物所在格 y
+     */
     createScoreAnimation(x, y) {
       this.scoreAnimations.push({
         x: x * this.gridSize + this.gridSize / 2,
@@ -518,6 +567,11 @@
       });
     }
     
+    /**
+     * 创建吃食物后的粒子爆散特效。
+     * @param {number} x 食物所在格 x
+     * @param {number} y 食物所在格 y
+     */
     createParticles(x, y) {
       const centerX = x * this.gridSize + this.gridSize / 2;
       const centerY = y * this.gridSize + this.gridSize / 2;
@@ -535,6 +589,9 @@
       }
     }
     
+    /**
+     * 渲染入口：清屏后按顺序绘制网格、蛇、食物、动画效果。
+     */
     draw() {
       this.ctx.fillStyle = '#1a252f';
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -546,6 +603,7 @@
       this.drawParticles();
     }
     
+    /** 绘制背景网格。 */
     drawGrid() {
       this.ctx.strokeStyle = 'rgba(52, 73, 94, 0.3)';
       this.ctx.lineWidth = 0.5;
@@ -563,6 +621,7 @@
       }
     }
     
+    /** 绘制蛇身体与头部（带阴影与渐变）。 */
     drawSnake() {
       this.snake.forEach((segment, index) => {
         const x = segment.x * this.gridSize;
@@ -605,6 +664,11 @@
       });
     }
     
+    /**
+     * 绘制蛇头双眼（简单视觉反馈）。
+     * @param {number} x 头部左上角像素 x
+     * @param {number} y 头部左上角像素 y
+     */
     drawSnakeEyes(x, y) {
       const eyeSize = 3;
       const eyeOffset = 6;
@@ -630,6 +694,7 @@
       this.ctx.fill();
     }
     
+    /** 绘制动态食物（含呼吸脉冲与高光）。 */
     drawFood() {
       const x = this.food.x * this.gridSize + this.gridSize/2;
       const y = this.food.y * this.gridSize + this.gridSize/2;
@@ -661,6 +726,7 @@
       this.ctx.restore();
     }
     
+    /** 绘制加分飘字动画。 */
     drawScoreAnimations() {
       this.scoreAnimations.forEach(animation => {
         this.ctx.save();
@@ -673,6 +739,7 @@
       });
     }
     
+    /** 绘制粒子特效。 */
     drawParticles() {
       this.particles.forEach(particle => {
         this.ctx.save();
@@ -685,6 +752,9 @@
       });
     }
     
+    /**
+     * 结束游戏：保存最高分并显示结束提示。
+     */
     endGame() {
       this.gameRunning = false;
       this.gameOver = true;
@@ -692,15 +762,18 @@
       this.showOverlay('游戏结束!', `得分: ${this.score} 分<br>按空格键重新开始`);
     }
     
+    /** 更新当前得分 UI。 */
     updateScore() {
       this.currentScoreEl.textContent = this.score;
     }
     
+    /** 读取本地最高分并刷新 UI。 */
     loadHighScore() {
       const highScore = localStorage.getItem('snake-high-score') || 0;
       this.highScoreEl.textContent = highScore;
     }
     
+    /** 保存最高分（若本局超越）。 */
     saveHighScore() {
       const currentHigh = parseInt(localStorage.getItem('snake-high-score') || 0);
       if (this.score > currentHigh) {
@@ -709,11 +782,13 @@
       }
     }
     
+    /** 显示遮罩提示信息。 */
     showOverlay(title, description) {
       this.message.innerHTML = `<h2>${title}</h2><p>${description}</p>`;
       this.overlay.classList.remove('hidden');
     }
     
+    /** 隐藏遮罩层。 */
     hideOverlay() {
       this.overlay.classList.add('hidden');
     }
