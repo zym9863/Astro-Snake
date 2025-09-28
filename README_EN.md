@@ -13,13 +13,21 @@ A classic Snake game developed with Astro framework, featuring modern UI design 
 - 🎪 Beautiful gradient backgrounds and animations
 - 💾 Local storage for high score records
 - ⌨️ Keyboard controls (Arrow keys + Spacebar)
+- 📱 Progressive Web App (PWA) support for offline play and install prompts
 
 ## 🚀 Project Structure
 
 ```text
 /
 ├── public/
-│   └── favicon.svg
+│   ├── favicon.svg
+│   ├── manifest.webmanifest
+│   ├── service-worker.js
+│   └── icons/
+│       ├── icon-192x192.png
+│       ├── icon-512x512.png
+│       ├── maskable-icon-192x192.png
+│       └── maskable-icon-512x512.png
 ├── src/
 │   ├── assets/
 │   │   ├── astro.svg
@@ -28,11 +36,14 @@ A classic Snake game developed with Astro framework, featuring modern UI design 
 │   │   ├── SnakeGame.astro    # Main Snake game component
 │   │   └── Welcome.astro      # Welcome component
 │   ├── layouts/
-│   │   └── Layout.astro       # Page layout
+│   │   └── Layout.astro       # Page layout (registers Service Worker)
 │   └── pages/
 │       └── index.astro        # Homepage
+├── tools/
+│   └── generate_icons.py     # Generate multi-size icons from icon.png
 └── package.json
 ```
+
 
 ## 🎯 Game Instructions
 
@@ -46,14 +57,14 @@ A classic Snake game developed with Astro framework, featuring modern UI design 
 
 All commands are run from the root of the project, from a terminal:
 
-| Command                   | Action                                           |
+| Command | Action |
 | :------------------------ | :----------------------------------------------- |
-| `pnpm install`            | Install dependencies                             |
-| `pnpm dev`               | Start local dev server at `localhost:4321`      |
-| `pnpm build`             | Build your production site to `./dist/`          |
-| `pnpm preview`           | Preview your build locally, before deploying     |
-| `pnpm astro ...`         | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help`   | Get help using the Astro CLI                     |
+| `pnpm install` | Install dependencies |
+| `pnpm dev` | Start local dev server at `localhost:4321` |
+| `pnpm build` | Build your production site to `./dist/` |
+| `pnpm preview` | Preview your build locally, before deploying |
+| `pnpm astro ...` | Run CLI commands like `astro add`, `astro check` |
+| `pnpm astro -- --help` | Get help using the Astro CLI |
 
 ## 🛠️ Tech Stack
 
@@ -61,6 +72,12 @@ All commands are run from the root of the project, from a terminal:
 - **Styling**: CSS3 with Flexbox & Grid
 - **Game Logic**: Vanilla JavaScript (Canvas API)
 - **Storage**: LocalStorage (for saving high scores)
+
+## 🛠️ PWA Quick Guide
+
+- **Offline caching**: `public/service-worker.js` precaches core assets to keep the game playable without network.
+- **App manifest**: `public/manifest.webmanifest` defines app name, theme color, and icon set for install prompts.
+- **Icon generation**: Run `python tools/generate_icons.py` to create PWA icons in `public/icons/` from the root `icon.png`. Install Pillow first if needed: `pip install Pillow`.
 
 ## 📱 Compatibility
 
@@ -71,27 +88,22 @@ All commands are run from the root of the project, from a terminal:
 ## 🎯 Quick Start
 
 1. Clone the project
+
 ```bash
 git clone https://github.com/zym9863/Astro-Snake.git
 cd Astro-Snake
 ```
 
 2. Install dependencies
+
 ```bash
 pnpm install
 ```
 
 3. Start development server
+
 ```bash
 pnpm dev
 ```
 
 4. Open browser and visit `http://localhost:4321`
-
-## 📄 License
-
-This project is for learning and entertainment purposes only.
-
----
-
-🎮 **Ready to challenge your reaction speed? Start the game!**
